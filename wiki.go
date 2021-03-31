@@ -5,7 +5,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
+	"strings"
+)
+
+const (
+	tmplPath = "tmpl"
+	dataPath = "data"
 )
 
 type Page struct {
@@ -15,12 +22,16 @@ type Page struct {
 
 func (p *Page) save() error {
 	filename := p.Title + ".txt"
-	return ioutil.WriteFile("data/"+filename, p.Body, 0600)
+	return ioutil.WriteFile(filepath.Join(dataPath, filename), p.Body, 0600)
+}
+
+func (p *Page) Lines() []string {
+	return strings.Split(string(p.Body), "\n")
 }
 
 func loadPage(title string) (*Page, error) {
 	filename := title + ".txt"
-	body, err := ioutil.ReadFile("data/" + filename)
+	body, err := ioutil.ReadFile(filepath.Join(dataPath, filename))
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +70,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 var templates = template.Must(template.ParseFiles(
-	"tmpl/edit.html",
-	"tmpl/view.html",
-	"tmpl/lip_upper.html",
-	"tmpl/lip_lower.html",
-	"tmpl/navbar.html"))
+	filepath.Join(tmplPath, "lip_upper.html"),
+	filepath.Join(tmplPath, "lip_lower.html"),
+	filepath.Join(tmplPath, "navbar.html"),
+	filepath.Join(tmplPath, "view.html"),
+	filepath.Join(tmplPath, "edit.html")))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
