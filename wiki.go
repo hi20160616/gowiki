@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -30,6 +33,7 @@ func (p *Page) Lines() []string {
 }
 
 func loadPage(title string) (*Page, error) {
+	title, _ = url.QueryUnescape(title)
 	filename := title + ".txt"
 	body, err := ioutil.ReadFile(filepath.Join(dataPath, filename))
 	if err != nil {
@@ -44,6 +48,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
+	p.Body = interPageLink(p.Body)
 	renderTemplate(w, "view", p)
 }
 
@@ -83,7 +88,21 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	}
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view)/(.+)$")
+
+// pattern like `[!foobar]` means a inter-page need to be made as link
+var interPage = regexp.MustCompile(`\[!.+\]`)
+
+func interPageLink(body []byte) []byte {
+	repl := func(pagename []byte) []byte {
+		pagename = pagename[2 : len(pagename)-1]
+		origin := pagename
+		pagename = bytes.ReplaceAll(pagename, []byte(" "), []byte("-"))
+		return []byte(fmt.Sprintf("<a href=\"/view/%s\">%s</a>", pagename, origin))
+	}
+
+	return interPage.ReplaceAllFunc(body, repl)
+}
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

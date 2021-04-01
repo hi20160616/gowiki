@@ -1,4 +1,6 @@
 This is the default page.
+[!inter-page-test]
+[!inter page test again]
 
 TODO:
 1. list titles
