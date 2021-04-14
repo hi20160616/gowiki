@@ -74,12 +74,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	viewHandler(w, r, "FrontPage")
 }
 
-var templates = template.Must(template.ParseFiles(
-	filepath.Join(tmplPath, "lip_upper.html"),
-	filepath.Join(tmplPath, "lip_lower.html"),
-	filepath.Join(tmplPath, "navbar.html"),
-	filepath.Join(tmplPath, "view.html"),
-	filepath.Join(tmplPath, "edit.html")))
+// var templates = template.Must(template.ParseFiles(
+//         filepath.Join(tmplPath, "lip_upper.html"),
+//         filepath.Join(tmplPath, "lip_lower.html"),
+//         filepath.Join(tmplPath, "navbar.html"),
+//         filepath.Join(tmplPath, "view.html"),
+//         filepath.Join(tmplPath, "edit.html")))
+var templates = template.Must(template.ParseGlob(filepath.Join(tmplPath, "*.html")))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
